@@ -66,9 +66,10 @@ pub enum Verbosity {
   High,
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Default, Clone)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Format {
+  #[default]
   Text,
   JsonSchema {
     name: String,
@@ -82,12 +83,6 @@ pub enum Format {
 
 #[allow(dead_code)]
 fn default_strict() -> bool { true }
-
-impl Default for Format {
-  fn default() -> Self {
-    Self::Text
-  }
-}
 
 #[derive(Serialize, Debug, Default)]
 pub struct Text {
@@ -164,7 +159,7 @@ mod tests {
     let msg = EasyInputMessage {
       content: "Extract names".to_string(),
       role: Role::User,
-      phase: "initial".to_string(),
+      phase: Some("initial".to_string()),
       r#type: "text".to_string(),
     };
 
