@@ -1,11 +1,11 @@
 [package]
 name = "forthos"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 authors = ["Rauf Hamidy <raufhamidy10@gmail.com>"]
 description = "A Rust wrapper for OpenAI's responses and embeddings endpoints with prompt caching support."
 readme = "README.md"
-repository = "https://github.com/yourusername/forthos"
+repository = "https://github.com/raufh10/forthos"
 license = "MIT"
 keywords = ["openai", "llm", "structured-outputs", "embeddings", "ai"]
 categories = ["api-bindings", "asynchronous"]
