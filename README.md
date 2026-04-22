@@ -49,14 +49,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 ```
-### 2. Prompt Caching
-Save costs on repetitive prompts by utilizing built-in caching support.
+### 2. Prompt Caching & Flex Tier
+Save costs on repetitive prompts by utilizing built-in caching & flex tier support.
 ```rust
 use forthos::responses::CacheRetention;
 
 let request = ResponseRequest::new(model, input, text)
   .with_retention(CacheRetention::TwentyFourHours)
-  .with_cache_key("unique-session-id".to_string());
+  .with_cache_key("unique-session-id".to_string())
+  .with_flex_tier();
 
 ```
 ### 3. Embeddings

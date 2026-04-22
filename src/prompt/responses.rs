@@ -107,6 +107,8 @@ pub struct ResponseRequest {
   pub prompt_cache_retention: Option<CacheRetention>,
   #[serde(skip_serializing_if = "Option::is_none")]
   pub prompt_cache_key: Option<String>,
+  #[serde(skip_serializing_if = "Option::is_none")]
+  pub service_tier: Option<String>,
 }
 
 impl ResponseRequest {
@@ -117,6 +119,7 @@ impl ResponseRequest {
       text,
       prompt_cache_retention: None,
       prompt_cache_key: None,
+      service_tier: None,
     }
   }
 
@@ -127,6 +130,11 @@ impl ResponseRequest {
 
   pub fn with_cache_key(mut self, key: String) -> Self {
     self.prompt_cache_key = Some(key);
+    self
+  }
+
+  pub fn with_flex_tier(mut self) -> Self {
+    self.service_tier = Some("flex".to_string());
     self
   }
 }
@@ -182,5 +190,20 @@ mod tests {
     assert_eq!(j["text"]["format"]["type"], "json_schema");
     assert_eq!(j["text"]["format"]["strict"], true);
     assert_eq!(j["input"][0]["role"], "user");
+  }
+
+  fn test_response_request_flex_tier() {
+    let msg = EasyInputMessage::new_user("Hello");
+    let text_config = Text::default();
+    
+    let req = ResponseRequest::new(
+      ResponseModel::Gpt5_4,
+      ResponseInput::EasyInput(vec![msg]),
+      text_config,
+    ).with_flex_tier();
+
+    let j = serde_json::to_value(&req).unwrap();
+
+    assert_eq!(j["service_tier"], "flex");
   }
 }
