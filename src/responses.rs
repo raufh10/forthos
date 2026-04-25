@@ -1,8 +1,8 @@
-mod input;
-mod models;
-mod parse;
-mod request;
-mod text;
+pub mod models;
+pub mod request;
+pub mod input;
+pub mod text;
+pub mod parse;
 
 pub use models::{
   ResponseModel, 

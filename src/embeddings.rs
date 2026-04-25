@@ -1,6 +1,6 @@
-mod models;
+pub mod models;
+pub mod request;
 mod parse;
-mod request;
 
 pub use models::{
   EmbeddingModel, 

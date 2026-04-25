@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use crate::embeddings::request::EmbeddingRequest;
 use crate::responses::request::ResponseRequest;
+use reqwest_middleware::ClientWithMiddleware;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct InferenceConfig {
@@ -16,8 +17,7 @@ pub struct PromptsConfig {
 
 #[derive(Debug)]
 pub struct OpenAIClient {
-  pub http: reqwest::Client,
+  pub http: ClientWithMiddleware,
   pub api_key: String,
   pub config: InferenceConfig,
 }
-

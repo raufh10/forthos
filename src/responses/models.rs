@@ -24,12 +24,6 @@ pub struct ResponseResponse {
   pub usage: Option<ResponseUsage>,
 }
 
-impl ResponseResponse {
-  pub fn get_content(&self) -> Option<&str> {
-    self.output.first()?.content.first()?.text.as_str().into()
-  }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Output {
   pub content: Vec<Content>,

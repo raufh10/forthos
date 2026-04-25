@@ -1,5 +1,5 @@
-use serde::Deserialize;
 use crate::responses::models::ResponseResponse;
+use serde::de::DeserializeOwned;
 
 impl ResponseResponse {
   pub fn get_content(&self) -> Option<String> {
@@ -10,10 +10,7 @@ impl ResponseResponse {
       .map(|c| c.text.clone())
   }
 
-  pub fn parse_json<T>(&self) -> Option<Result<T, serde_json::Error>> 
-  where 
-    for<'de> T: Deserialize<'de> 
-  {
+  pub fn parse_json<T: DeserializeOwned>(&self) -> Option<Result<T, serde_json::Error>> {
     self.get_content().map(|json_str| serde_json::from_str::<T>(&json_str))
   }
 
