@@ -1,14 +1,14 @@
-use forthos::{LlmExecutor, OpenAIClient};
-use forthos::responses::{ResponseResponse, ResponseRequest, ResponseInput, ResponseModel, Text, Role, EasyInputMessage};
-use forthos::embeddings::{EmbeddingResponse, EmbeddingRequest, EmbeddingModel, EmbeddingInput};
+use forthos::OpenAIClient;
+use forthos::responses::ResponseResponse;
+use forthos::embeddings::EmbeddingResponse;
 use forthos::client::InferenceConfig;
 
-use serde_json::json;
 use dotenvy::dotenv;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use tempfile::tempdir;
+use std::time::Instant;
 
 fn setup_client() -> OpenAIClient {
   let _ = dotenv(); 
@@ -24,7 +24,6 @@ async fn test_yaml_config_loading_and_execution() {
   let dir = tempdir().unwrap();
   let file_path = dir.path().join("config.yaml");
 
-  // Fully compliant 2026 YAML structure
   let yaml_data = r#"
 path: "test_path"
 prompts:
@@ -44,19 +43,30 @@ prompts:
   let mut file = File::create(&file_path).unwrap();
   file.write_all(yaml_data.as_bytes()).unwrap();
 
-  // 1. Test Loading
   let config = InferenceConfig::from_yaml(&file_path)
     .expect("Module failed to load valid YAML file");
 
   client = client.with_config(config);
 
-  // 2. Test Actual Calling (Embedding)
+  println!("\n--- [START] test_yaml_config_loading_and_execution ---");
+  
+  let now = Instant::now();
   let emb_res: Result<EmbeddingResponse, String> = client.run_embedding_at(0).await;
+  println!("Embedding Latency: {:?}", now.elapsed());
   assert!(emb_res.is_ok(), "Actual API Call (Embedding) failed: {:?}", emb_res.err());
+  println!("Embedding Response: Successfully received {} vectors", emb_res.unwrap().data[0].embedding.len());
 
-  // 3. Test Actual Calling (Response)
+  let now = Instant::now();
   let resp_res: Result<ResponseResponse, String> = client.run_response_at(0).await;
+  println!("Response Latency: {:?}", now.elapsed());
   assert!(resp_res.is_ok(), "Actual API Call (Response) failed: {:?}", resp_res.err());
+  
+  if let Ok(res) = resp_res {
+    // Fixed: converted &str to String for unwrap_or
+    println!("Response Content: {}", res.get_content().unwrap_or_else(|| "EMPTY".to_string()));
+  }
+  
+  println!("--- [END] test_yaml_config_loading_and_execution ---\n");
 }
 
 #[tokio::test]
@@ -96,17 +106,25 @@ prompts:
   let config = InferenceConfig::from_yaml(&file_path).expect("Failed to load YAML");
   client = client.with_config(config);
 
-  // 4. Test Calling + Structured Output Parsing
+  println!("\n--- [START] test_structured_output_from_yaml_mock ---");
+  
   let result: ResponseResponse = client.run_response_at(0).await.expect("API Call failed");
 
   #[derive(serde::Deserialize, Debug)]
-  struct Person { name: String, age: u32 }
+  struct Person { 
+    name: String, 
+    #[serde(rename = "age")] // Map "age" from JSON to "_age" in Rust
+    _age: u32 
+  }
 
   let person = result.parse_json::<Person>()
     .expect("No content found")
     .expect("Failed to parse JSON schema output");
 
+  println!("Structured Result: {:?}", person);
   assert_eq!(person.name, "John");
+  
+  println!("--- [END] test_structured_output_from_yaml_mock ---\n");
 }
 
 #[tokio::test]
@@ -114,7 +132,6 @@ async fn test_invalid_yaml_schema_validation() {
   let dir = tempdir().unwrap();
   let file_path = dir.path().join("invalid.yaml");
 
-  // Added 'verbosity' and 'embeddings' so it passes the Parser and hits the Validator
   let invalid_yaml = r#"
 path: "invalid_test"
 prompts:
@@ -136,9 +153,13 @@ prompts:
 
   let result = InferenceConfig::from_yaml(&file_path);
 
-  // 5. Test Validation Logic
-  assert!(result.is_err(), "Validator should have caught the space in the schema name");
+  println!("\n--- [START] test_invalid_yaml_schema_validation ---");
+  
+  assert!(result.is_err());
   let err_msg = result.unwrap_err().to_lowercase();
-  assert!(err_msg.contains("invalid") || err_msg.contains("schema"), "Wrong error message: {}", err_msg);
+  println!("Caught Expected Error: {}", err_msg);
+  assert!(err_msg.contains("invalid") || err_msg.contains("schema"));
+  
+  println!("--- [END] test_invalid_yaml_schema_validation ---\n");
 }
 
