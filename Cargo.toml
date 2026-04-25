@@ -12,21 +12,21 @@ categories = ["api-bindings", "asynchronous"]
 exclude = [".env", "tests/*"]
 
 [dependencies]
-# Async Runtime
-tokio = { version = "1.40", features = ["full"] }
-
-# LLM
-reqwest = { version = "0.13", features = ["json", "rustls"] }
-
-# Data Serialization
-serde = { version = "1.0", features = ["derive"] }
+anyhow = "1.0.102"
+reqwest = { version = "0.13.2", features = ["json", "rustls"] }
+reqwest-middleware = "0.5.1"
+reqwest-retry = "0.9.1"
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0"
+tokio = { version = "1.40", features = ["full"] }
+yaml_serde = "0.10.4"
 
 [dev-dependencies]
-# Testing utilities
-tokio = { version = "1.40", features = ["macros", "rt-multi-thread"] }
+dotenvy = "0.15.7"
 serde_json = "1.0"
-dotenvy = "0.15"
+serde_yaml = "0.9.34"
+tempfile = "3.27.0"
+tokio = { version = "1.40", features = ["macros", "rt-multi-thread"] }
 
 [package.metadata.docs.rs]
 all-features = true

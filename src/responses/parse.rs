@@ -1,41 +1,5 @@
 use serde::Deserialize;
-
-#[derive(Deserialize, Debug)]
-pub struct ResponseResponse {
-  pub output: Vec<Output>,
-  pub usage: Option<ResponseUsage>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Output {
-  pub content: Vec<Content>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Content {
-  pub text: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ResponseUsage {
-  pub input_tokens: u32,
-  pub input_tokens_details: Option<InputTokenDetails>,
-  pub output_tokens: u32,
-  pub output_tokens_details: Option<OutputTokenDetails>,
-  pub total_tokens: u32,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct InputTokenDetails {
-  #[serde(default)]
-  pub cached_tokens: u32,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct OutputTokenDetails {
-  #[serde(default)]
-  pub reasoning_tokens: u32,
-}
+use crate::responses::models::ResponseResponse;
 
 impl ResponseResponse {
   pub fn get_content(&self) -> Option<String> {
@@ -73,6 +37,7 @@ impl ResponseResponse {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::responses::models::*;
   use serde_json::json;
 
   #[test]
@@ -94,5 +59,7 @@ mod tests {
 
     let resp: ResponseResponse = serde_json::from_value(raw_json).unwrap();
     assert_eq!(resp.get_content().unwrap(), "{\"name\": \"Gemini\"}");
+    assert_eq!(resp.get_cached_tokens(), 50);
+    assert_eq!(resp.get_reasoning_tokens(), 10);
   }
 }

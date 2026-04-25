@@ -1,29 +1,77 @@
 pub mod client;
-pub mod llm;
-pub mod parser;
-pub mod prompt;
+pub mod embeddings;
+pub mod responses;
 
-pub use client::OpenAIClient;
-pub use llm::LlmExecutor;
+use crate::client::OpenAIClient;
+use crate::responses::{ResponseRequest, ResponseResponse};
+use crate::embeddings::{EmbeddingRequest, EmbeddingResponse};
 
-pub use prompt::{
-  create_message,
-  Role,
-};
+pub struct LlmExecutor;
 
-pub use prompt::responses::{
-  ResponseRequest,
-  ResponseModel,
-  ResponseInput,
-  EasyInputMessage,
-};
+impl LlmExecutor {
+  pub async fn execute_response(
+    client: &OpenAIClient,
+    payload: &ResponseRequest,
+  ) -> Result<ResponseResponse, reqwest_middleware::Error> {
+    let url = "https://api.openai.com/v1/responses";
 
-pub use prompt::embeddings::{
-  EmbeddingRequest,
-  EmbeddingModel,
-  EmbeddingInput,
-};
+    let body = serde_json::to_value(payload).map_err(|e| {
+      reqwest_middleware::Error::Middleware(anyhow::anyhow!(e))
+    })?;
 
-pub use parser::responses::ResponseResponse;
-pub use parser::embeddings::EmbeddingResponse;
+    client
+      .http
+      .post(url)
+      .body(body.to_string())
+      .header("Content-Type", "application/json")
+      .send()
+      .await?
+      .json::<ResponseResponse>()
+      .await
+      .map_err(|e| reqwest_middleware::Error::Reqwest(e))
+  }
 
+  pub async fn execute_embedding(
+    client: &OpenAIClient,
+    payload: &EmbeddingRequest,
+  ) -> Result<EmbeddingResponse, reqwest_middleware::Error> {
+    let url = "https://api.openai.com/v1/embeddings";
+
+    let body = serde_json::to_value(payload).map_err(|e| {
+      reqwest_middleware::Error::Middleware(anyhow::anyhow!(e))
+    })?;
+
+    client
+      .http
+      .post(url)
+      .body(body.to_string())
+      .header("Content-Type", "application/json")
+      .send()
+      .await?
+      .json::<EmbeddingResponse>()
+      .await
+      .map_err(|e| reqwest_middleware::Error::Reqwest(e))
+  }
+}
+
+impl OpenAIClient {
+  /// Runs a response prompt from the config by index
+  pub async fn run_response_at(&self, index: usize) -> Result<ResponseResponse, String> {
+    let prompt = self.config.prompts.responses.get(index)
+      .ok_or_else(|| format!("Response prompt at index {} not found", index))?;
+
+    LlmExecutor::execute_response(self, prompt)
+      .await
+      .map_err(|e| e.to_string())
+  }
+
+  /// Runs an embedding prompt from the config by index
+  pub async fn run_embedding_at(&self, index: usize) -> Result<EmbeddingResponse, String> {
+    let prompt = self.config.prompts.embeddings.get(index)
+      .ok_or_else(|| format!("Embedding prompt at index {} not found", index))?;
+
+    LlmExecutor::execute_embedding(self, prompt)
+      .await
+      .map_err(|e| e.to_string())
+  }
+}

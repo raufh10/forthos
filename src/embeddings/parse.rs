@@ -1,25 +1,4 @@
-use serde::Deserialize;
-
-#[derive(Deserialize, Debug)]
-pub struct EmbeddingResponse {
-  pub data: Vec<EmbeddingData>,
-  pub model: String,
-  pub object: String,
-  pub usage: EmbeddingUsage,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct EmbeddingData {
-  pub embedding: Vec<f32>,
-  pub index: u32,
-  pub object: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct EmbeddingUsage {
-  pub prompt_tokens: u32,
-  pub total_tokens: u32,
-}
+use crate::embeddings::models::EmbeddingResponse;
 
 impl EmbeddingResponse {
   pub fn get_vectors(&self) -> Vec<Vec<f32>> {
@@ -34,6 +13,7 @@ impl EmbeddingResponse {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::embeddings::models::EmbeddingResponse;
 
   #[test]
   fn test_embedding_response_parsing() {
