@@ -22,9 +22,14 @@ impl EmbeddingRequest {
   }
 
   pub fn with_dimensions(mut self, dims: u32) -> Result<Self, String> {
+    if dims == 0 {
+      return Err("Dimensions must be greater than 0".into());
+    }
+
     if self.model == EmbeddingModel::Ada002 {
       return Err("Ada-002 does not support custom dimensions".into());
     }
+    
     self.dimensions = Some(dims);
     Ok(self)
   }
@@ -41,8 +46,7 @@ mod tests {
       EmbeddingModel::Ada002,
       EmbeddingInput::String("test".into())
     );
-    
-    // Should fail for Ada
+
     assert!(req.with_dimensions(512).is_err());
 
     let req_v3 = EmbeddingRequest::new(
@@ -50,16 +54,13 @@ mod tests {
       EmbeddingInput::String("test".into())
     );
 
-    // Should fail for 0
     assert!(req_v3.with_dimensions(0).is_err());
-    
-    // Should pass for v3 with positive int
+
     let valid_req = EmbeddingRequest::new(
       EmbeddingModel::ThreeLarge,
       EmbeddingInput::String("test".into())
     ).with_dimensions(1024).unwrap();
-    
+
     assert_eq!(valid_req.dimensions, Some(1024));
   }
 }
-
