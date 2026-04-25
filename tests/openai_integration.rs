@@ -1,6 +1,6 @@
 use forthos::{LlmExecutor, OpenAIClient};
-use forthos::responses::{ResponseRequest, ResponseInput, ResponseModel, Text, Role, EasyInputMessage};
-use forthos::embeddings::{EmbeddingRequest, EmbeddingModel, EmbeddingInput};
+use forthos::responses::{ResponseResponse, ResponseRequest, ResponseInput, ResponseModel, Text, Role, EasyInputMessage};
+use forthos::embeddings::{EmbeddingResponse, EmbeddingRequest, EmbeddingModel, EmbeddingInput};
 use forthos::client::InferenceConfig;
 
 use serde_json::json;
@@ -31,8 +31,7 @@ prompts:
       dimensions: 256
   responses:
     - model: gpt-5.4-mini
-      input:
-        text_input: "Say hello"
+      input: "Say hello"
       text:
         verbosity: low
         format:
@@ -52,12 +51,12 @@ prompts:
 
   // 5. Test execution by index
   // Test Embedding (Index 0)
-  let emb_res = client.run_embedding_at(0).await;
+  let emb_res: Result<EmbeddingResponse, String> = client.run_embedding_at(0).await;
   assert!(emb_res.is_ok(), "YAML Embedding failed: {:?}", emb_res.err());
   assert_eq!(emb_res.unwrap().data[0].embedding.len(), 256);
 
   // Test Response (Index 0)
-  let resp_res = client.run_response_at(0).await;
+  let resp_res: Result<ResponseResponse, String> = client.run_response_at(0).await;
   assert!(resp_res.is_ok(), "YAML Response failed: {:?}", resp_res.err());
 }
 
@@ -67,6 +66,7 @@ async fn test_structured_output_from_yaml_mock() {
 
   // Mocking JSON Schema in YAML
   let yaml_data = r#"
+path: "structured_test"
 prompts:
   responses:
     - model: gpt-5.4-mini
@@ -95,37 +95,40 @@ prompts:
 
   client = client.with_config(config);
 
-  let result = client.run_response_at(0).await.unwrap();
-  
+  let result: ResponseResponse = client.run_response_at(0).await.expect("API Call failed");
+
   #[derive(serde::Deserialize, Debug)]
   struct Person { name: String, age: u32 }
-  
-  let person = result.parse_json::<Person>().unwrap().unwrap();
-  
+
+  let person = result.parse_json::<Person>()
+    .expect("No content found")
+    .expect("Failed to parse JSON schema output");
+
   assert_eq!(person.name, "John");
   assert_eq!(person.age, 30);
 }
 
 #[tokio::test]
 async fn test_invalid_yaml_schema_validation() {
-  // Testing custom validator in config_build.rs
   let invalid_yaml = r#"
+path: "invalid_test"
 prompts:
   responses:
     - model: gpt-5.4-mini
+      input: "test"
       text:
         format:
           type: json_schema
           name: "Invalid Name With Spaces"
           schema:
-            not_an_object: 123
+            type: object
 "#;
 
   let mut temp_file = NamedTempFile::new().unwrap();
   writeln!(temp_file, "{}", invalid_yaml).unwrap();
 
   let result = InferenceConfig::from_yaml(temp_file.path());
-  
+
   assert!(result.is_err());
   assert!(result.unwrap_err().contains("Invalid schema name"));
 }

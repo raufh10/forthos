@@ -2,7 +2,9 @@ pub mod client;
 pub mod embeddings;
 pub mod responses;
 
-use crate::client::OpenAIClient;
+pub use crate::client::models::OpenAIClient;
+pub use crate::client::models::InferenceConfig;
+
 use crate::responses::{ResponseRequest, ResponseResponse};
 use crate::embeddings::{EmbeddingRequest, EmbeddingResponse};
 
