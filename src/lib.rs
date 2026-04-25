@@ -29,6 +29,15 @@ impl LlmExecutor {
       .send()
       .await?;
 
+    // Check for non-success status codes (4xx, 5xx)
+    if !res.status().is_success() {
+      let status = res.status();
+      let err_body = res.text().await.unwrap_or_else(|_| "Unknown error body".to_string());
+      return Err(reqwest_middleware::Error::Middleware(anyhow::anyhow!(
+        "API Error {}: {}", status, err_body
+      )));
+    }
+
     let response_data: ResponseResponse = res
       .json::<ResponseResponse>()
       .await
@@ -54,6 +63,15 @@ impl LlmExecutor {
       .header("Content-Type", "application/json")
       .send()
       .await?;
+
+    // Check for non-success status codes (4xx, 5xx)
+    if !res.status().is_success() {
+      let status = res.status();
+      let err_body = res.text().await.unwrap_or_else(|_| "Unknown error body".to_string());
+      return Err(reqwest_middleware::Error::Middleware(anyhow::anyhow!(
+        "API Error {}: {}", status, err_body
+      )));
+    }
 
     let embedding_data: EmbeddingResponse = res
       .json::<EmbeddingResponse>()

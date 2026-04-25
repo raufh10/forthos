@@ -12,7 +12,6 @@ impl EmbeddingResponse {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use crate::embeddings::models::EmbeddingResponse;
 
   #[test]

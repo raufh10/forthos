@@ -33,7 +33,6 @@ impl ResponseResponse {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
   use crate::responses::models::*;
   use serde_json::json;
 
